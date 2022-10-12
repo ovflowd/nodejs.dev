@@ -47,12 +47,26 @@ const getMessagesForLocale = locale =>
 const getRedirectForLocale = (locale, url) =>
   /^\/\/|https?:\/\//.test(url) ? url : `/${locale}${url}`;
 
-exports.onCreateWebpackConfig = ({ plugins, actions }) => {
+exports.onCreateWebpackConfig = ({ plugins, actions, stage, getConfig }) => {
   actions.setWebpackConfig({
     plugins: [
       plugins.ignore({ resourceRegExp: /canvas/, contextRegExp: /jsdom$/ }),
     ],
   });
+
+  if (stage === 'develop' || stage === 'build-javascript') {
+    const config = getConfig();
+
+    const miniCssExtractPlugin = config.plugins.find(
+      plugin => plugin.constructor.name === 'MiniCssExtractPlugin'
+    );
+
+    if (miniCssExtractPlugin) {
+      miniCssExtractPlugin.options.ignoreOrder = true;
+    }
+
+    actions.replaceWebpackConfig(config);
+  }
 };
 
 exports.createSchemaCustomization = ({ actions }) => {
